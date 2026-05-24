@@ -1,4 +1,4 @@
-# hoxi-os
+# hoxi-ublue
 
 My custom Fedora Silverblue image, built with [BlueBuild](https://blue-build.org/).
 
