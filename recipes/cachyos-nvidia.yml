@@ -1,0 +1,90 @@
+# yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
+modules:
+  - type: containerfile
+    containerfiles:
+      - clear-rpmostree-kernel-hooks
+
+  - type: script
+    snippets:
+      - |
+        set -oue pipefail
+        
+        dnf copr enable -y bieszczaders/kernel-cachyos
+        
+        curl -fLsS --retry 5 -o /etc/yum.repos.d/negativo17-fedora-nvidia.repo https://negativo17.org/repos/fedora-nvidia.repo
+        sed -i '/^enabled=1/a\priority=90' /etc/yum.repos.d/negativo17-fedora-nvidia.repo
+        
+        curl -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo -o /etc/yum.repos.d/nvidia-container-toolkit.repo
+        sed -i 's/^gpgcheck=0/gpgcheck=1/' /etc/yum.repos.d/nvidia-container-toolkit.repo
+        sed -i 's/^enabled=0.*/enabled=1/' /etc/yum.repos.d/nvidia-container-toolkit.repo
+
+        dnf remove -y kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra
+        rm -rf /usr/lib/modules/*
+        
+        dnf install -y --setopt=install_weak_deps=False \
+          kernel-cachyos \
+          kernel-cachyos-core \
+          kernel-cachyos-modules \
+          kernel-cachyos-devel \
+          kernel-cachyos-devel-matched
+
+        mkdir -p /var/tmp
+        chmod 1777 /var/tmp
+        dnf install -y --setopt=install_weak_deps=False akmods gcc-c++
+        
+        cp /usr/sbin/akmodsbuild /usr/sbin/akmodsbuild.backup
+        sed -i '/if \[\[ -w \/var \]\] ; then/,/fi/d' /usr/sbin/akmodsbuild
+        
+        dnf install -y --setopt=install_weak_deps=False nvidia-kmod-common nvidia-modprobe
+        mv /usr/sbin/akmodsbuild.backup /usr/sbin/akmodsbuild
+
+        KERNEL_VERSION="$(rpm -q "kernel-cachyos" --queryformat '%{VERSION}-%{RELEASE}.%{ARCH}')"
+        echo "Detected CachyOS Kernel Version: ${KERNEL_VERSION}"
+
+        echo "Compiling Nvidia kmod locally..."
+        akmods --force --kernels "${KERNEL_VERSION}" --kmod "nvidia"
+
+        modinfo /usr/lib/modules/${KERNEL_VERSION}/extra/nvidia/nvidia{,-drm,-modeset,-peermem,-uvm}.ko.xz > /dev/null || \
+            (cat "/var/cache/akmods/nvidia/*.failed.log" && exit 1)
+
+  - type: dnf
+    install:
+      packages:
+        - nvidia-driver
+        - nvidia-persistenced
+        - nvidia-settings
+        - nvidia-driver-cuda
+        - nvidia-container-toolkit
+        - libnvidia-fbc
+        - libva-nvidia-driver
+
+  - type: script
+    snippets:
+      - |
+        set -oue pipefail
+        
+        curl -L https://raw.githubusercontent.com/NVIDIA/dgx-selinux/master/bin/RHEL9/nvidia-container.pp -o /tmp/nvidia-container.pp
+        semodule -i /tmp/nvidia-container.pp
+        rm -f /tmp/nvidia-container.pp
+        
+        dnf -y remove akmods gcc-c++ kernel-cachyos-devel
+        
+        if [ -f /etc/yum.repos.d/fedora-multimedia.repo ]; then
+            sed -i 's/^enabled=.*/enabled=1/' /etc/yum.repos.d/fedora-multimedia.repo
+        fi
+        
+        # Clear external repos
+        rm -f /etc/yum.repos.d/nvidia-container-toolkit.repo
+        rm -f /etc/yum.repos.d/negativo17-fedora-nvidia.repo
+
+  - type: containerfile
+    containerfiles:
+      - finish-kernel-install
+
+  - type: kargs
+    kargs:
+      - permissive=1
+      - rd.driver.blacklist=nouveau
+      - modprobe.blacklist=nouveau
+      - nvidia-drm.modeset=1
+      - nvidia-drm.fbdev=1

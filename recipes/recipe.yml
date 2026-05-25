@@ -3,14 +3,15 @@
 name: hoxi-ublue
 description: hoxi's custom Fedora Silverblue image
 
-base-image: ghcr.io/ublue-os/silverblue-main
+base-image: ghcr.io/ublue-os/kinoite-main
 image-version: 44
 
 modules:
   #- from-file: ogc-kernel.yml
   - from-file: downgrade-grub.yml
-  - from-file: cachyos-kernel.yml
-  - from-file: nvidia-driver.yml
+  #- from-file: cachyos-kernel.yml
+  #- from-file: nvidia-driver.yml
+  - from-file: cachyos-nvidia.yml
 
   - type: files
     files:
