@@ -6,9 +6,12 @@ description: hoxi's custom Fedora Silverblue image
 base-image: ghcr.io/ublue-os/silverblue-main
 image-version: 44
 
-# module configuration, executed in order
-# you can include multiple instances of the same module
 modules:
+  #- from-file: ogc-kernel.yml
+  - from-file: downgrade-grub.yml
+  - from-file: cachyos-kernel.yml
+  - from-file: nvidia-driver.yml
+
   - type: files
     files:
       - source: system
@@ -28,9 +31,7 @@ modules:
         # "firefox" is the main package, "firefox-langpacks" is a dependency
         - firefox
         - firefox-langpacks # also remove firefox dependency (not required for all packages, this is a special case)
-    
-  - from-file: downgrade-grub.yml
-  
+
   - type: default-flatpaks
     configurations:
       - notify: true # Send notification after install/uninstall is finished (true/false)

@@ -1,0 +1,8 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
+# This recipe installs the version of the CachyOS version of the kernel from the official COPR repository for it.
+
+modules:
+  - type: containerfile
+    containerfiles:
+      - download-ogc-kernel

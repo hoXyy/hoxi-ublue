@@ -1,0 +1,9 @@
+RUN --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    --mount=type=bind,from=ghcr.io/ublue-os/akmods-nvidia-open:ogc-44-7.0.9-ogc3.2.fc44.x86_64,src=/kernel-rpms,dst=/tmp/kernel-rpms \
+    --mount=type=bind,from=ghcr.io/ublue-os/akmods-nvidia-open:ogc-44-7.0.9-ogc3.2.fc44.x86_64,src=/rpms/common,dst=/tmp/rpms/common \
+    --mount=type=bind,from=ghcr.io/ublue-os/akmods-nvidia-open:ogc-44-7.0.9-ogc3.2.fc44.x86_64,src=/rpms/kmods,dst=/tmp/rpms/kmods \
+    --mount=type=bind,src=./build-scripts,dst=/tmp/ctx,Z \
+    --mount=type=tmpfs,dst=/tmp \
+    /tmp/ctx/install-kernel-akmods && \
+    /tmp/ctx/cleanup

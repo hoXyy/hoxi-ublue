@@ -1,0 +1,17 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
+# This recipe installs the NVIDIA driver from the negativo17's repo.
+
+modules:
+  - type: script
+    scripts:
+      - set-up-nvidia.sh
+
+  # needed for the CachyOS kernel to load kernel modules with SELinux
+  - type: kargs
+    kargs:
+      - permissive=1
+      - rd.driver.blacklist=nouveau
+      - modprobe.blacklist=nouveau
+      - nvidia-drm.modeset=1
+      - nvidia-drm.fbdev=1

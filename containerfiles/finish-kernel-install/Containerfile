@@ -1,0 +1,7 @@
+RUN \ 
+pushd /usr/lib/kernel/install.d && \
+mv 05-rpmostree.install.bak 05-rpmostree.install && \
+mv 50-dracut.install.bak 50-dracut.install && \
+popd && \
+depmod $(basename /usr/lib/modules/*cachyos*x86_64) && \
+ostree container commit

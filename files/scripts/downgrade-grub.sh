@@ -2,7 +2,6 @@
 
 set -oue pipefail
 
-# Your code goes here.
 echo 'Downgrading GRUB...'
 
 mkdir /tmp/downgrade-grub
